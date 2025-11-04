@@ -49,7 +49,7 @@ function getGeotagging(exif){
 }
 function encodeGPS(exif){
     const g = getGeotagging(exif); 
-    if (!g) return ' ';
+    if (!g) return ' '.padEnd(20, ' ');
     try {
         const latRef = g.GPSLatitudeRef,
               latDeg = Math.floor(g.GPSLatitude[0]).toString().padStart(3, '0'),
@@ -59,8 +59,8 @@ function encodeGPS(exif){
               lonDeg = Math.floor(g.GPSLongitude[0]).toString().padStart(3, '0'),
               lonMin = Math.floor(g.GPSLongitude[1]).toString().padStart(2, '0'),
               lonSec = Math.floor(g.GPSLongitude[2] * 100).toString().padStart(4, '0');
-        return latRef + latDeg + latMin + latSec + lonRef + lonDeg + lonMin + lonSec;
-    } catch (e) { console.warn('GPS encode error', e); return ' '; }
+        return (latRef + latDeg + latMin + latSec + lonRef + lonDeg + lonMin + lonSec).padEnd(20, ' ');
+    } catch (e) { console.warn('GPS encode error', e); return ' '.padEnd(20, ' '); }
 }
 function uint24ToBytes(v){
     return [(v >> 16) & 0xFF, (v >> 8) & 0xFF, v & 0xFF];
@@ -104,7 +104,6 @@ function updatePreview(){
     document.getElementById('previewStatus').textContent = '预览更新完成';
 }
 
-/* ---- 拖拽实现 ---- */
 function startDrag(e){
     if (!document.getElementById('text').value) return;
     isDragging = true;
@@ -129,13 +128,11 @@ function doDrag(e){
 }
 function endDrag(){ isDragging = false; }
 
-/* ---- 滑块显示/隐藏 ---- */
 function toggleSliders(){
     const el = document.getElementById('xySliders');
-    el.style.display = el.style.display === 'none' ? 'grid' : 'none';
+    el.style.display = el.style.display === 'none' ? 'block' : 'none';
 }
 
-/* ---- 重置文本设置 ---- */
 function resetTextOptions(){
     document.getElementById('text').value = ''; 
     document.getElementById('color').value = '#ff0000';
@@ -172,7 +169,6 @@ document.addEventListener('DOMContentLoaded', () => {
         updatePreview();
     });
 
-    // 上传第一张图用于实时预览
     document.getElementById('imageFiles').addEventListener('change', e => {
         if (e.target.files.length === 0) return;
         const reader = new FileReader();
@@ -184,7 +180,6 @@ document.addEventListener('DOMContentLoaded', () => {
         reader.readAsDataURL(e.target.files[0]);
     });
 
-    // 拖拽事件
     const canvas = document.getElementById('previewCanvas');
     canvas.addEventListener('mousedown', startDrag);
     canvas.addEventListener('touchstart', e => { e.clientX = e.touches[0].clientX; e.clientY = e.touches[0].clientY; startDrag(e); }, { passive: false });
@@ -194,28 +189,26 @@ document.addEventListener('DOMContentLoaded', () => {
     canvas.addEventListener('mouseleave', endDrag);
     canvas.addEventListener('touchend', endDrag);
 
-    // 分辨率切换时同步滑块 max
     document.getElementById('resolution').addEventListener('change', () => {
         const [w, h] = document.getElementById('resolution').value.split('x').map(Number);
         document.getElementById('textX').max = w; 
         document.getElementById('textY').max = h;
+        updatePreview();
     });
 
-    // Radio ID 实时转大写 + 限制 8 位
     const radioidInput = document.getElementById('radioid');
     radioidInput.addEventListener('input', function() {
-        this.value = this.value.toUpperCase().substring(0, 8);
+        this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g, '').substring(0, 8);
     });
 });
 
 /* ====================== 批量处理 ====================== */
 async function processImages(){
     const callsign = document.getElementById('callsign').value.padEnd(16, ' ').substring(0, 16);
-    
-    // 正确处理 Radio ID：支持字母+数字，8 位
-    let radioidRaw = document.getElementById('radioid').value.toUpperCase().substring(0, 8);
-    const radioidFull = radioidRaw.padStart(8, '0');     // 用于 DIR 条目
-    const radioidPrefix = radioidRaw.padStart(5, '0').substring(0, 5);  // 用于文件名
+
+    let radioidRaw = document.getElementById('radioid').value.toUpperCase().replace(/[^A-Z0-9]/g, '').substring(0, 8);
+    const radioidFull = radioidRaw.padStart(8, '0');
+    const radioidPrefix = radioidRaw.substring(0, 5);
 
     const [width, height] = document.getElementById('resolution').value.split('x').map(Number);
     const files = document.getElementById('imageFiles').files;
@@ -249,7 +242,6 @@ async function processImages(){
     for (let i = 0; i < files.length; i++){
         const file = files[i], seq = i + 1;
         const name = `H${radioidPrefix}${seq.toString().padStart(6, '0')}.jpg`;
-
         promises.push(new Promise((res, rej) => {
             const r = new FileReader();
             r.onload = e => {
@@ -315,7 +307,7 @@ async function processImages(){
                                 statusEl.textContent = `处理第 ${picCount}/${files.length} 张...`;
 
                                 if (picCount === files.length) {
-                                    qso.file('QSOPCTDIR.dat', dirBytes.slice(0, dirOff));
+                                    qso.file('QSOPCTDIR.DAT', dirBytes.slice(0, dirOff));
                                     const fat = new Uint8Array(picCount * 4);
                                     for (let p = 0; p < picCount; p++) {
                                         fat[p * 4] = 0x40;
@@ -323,7 +315,7 @@ async function processImages(){
                                         const ab = uint24ToBytes(a);
                                         fat[p * 4 + 1] = ab[0]; fat[p * 4 + 2] = ab[1]; fat[p * 4 + 3] = ab[2];
                                     }
-                                    qso.file('QSOPCTFAT.dat', fat);
+                                    qso.file('QSOPCTFAT.DAT', fat);
                                     const mng = new Uint8Array(32);
                                     const mv = new DataView(mng.buffer);
                                     mv.setUint16(0, 0, false);
@@ -331,7 +323,7 @@ async function processImages(){
                                     mv.setUint16(16, picCount, false);
                                     mv.setUint16(18, 0, false);
                                     for (let j = 20; j < 32; j++) mng[j] = 0xFF;
-                                    qso.file('QSOMNG.dat', mng);
+                                    qso.file('QSOMNG.DAT', mng);
 
                                     zip.generateAsync({ type: 'blob' }).then(blob => {
                                         const a = document.createElement('a');
