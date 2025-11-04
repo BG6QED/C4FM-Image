@@ -1,0 +1,161 @@
+body { 
+    font-family: 'Arial', sans-serif; 
+    background: linear-gradient(to bottom, #0A2540, #001F3F); 
+    color: #FFFFFF; 
+    margin: 0; 
+    padding: 20px; 
+    display: flex; 
+    justify-content: center; 
+    align-items: flex-start; 
+    min-height: 100vh;
+}
+.container { 
+    max-width: 800px; 
+    width: 100%; 
+}
+h1 { 
+    text-align: center; 
+    color: #00BFFF; 
+    border-bottom: 2px solid #00BFFF; 
+    padding-bottom: 10px;
+}
+.subtitle {
+    text-align: center; 
+    color: #CCCCCC;
+    margin-bottom: 20px;
+}
+.section { 
+    background: rgba(0, 31, 63, 0.8); 
+    border: 1px solid #00BFFF; 
+    border-radius: 8px; 
+    padding: 20px; 
+    margin: 15px 0; 
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+.card {
+    transition: box-shadow 0.3s;
+}
+.card:hover {
+    box-shadow: 0 6px 12px rgba(0, 191, 255, 0.3);
+}
+.input-section {
+    display: grid;
+    gap: 20px;
+}
+.input-group {
+    display: flex;
+    flex-direction: column;
+}
+.text-options {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 15px;
+}
+.option-group {
+    display: flex;
+    flex-direction: column;
+}
+label {
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+input[type="text"], input[type="number"], select { 
+    padding: 10px; 
+    border: 1px solid #00BFFF; 
+    border-radius: 4px; 
+    background: #001F3F; 
+    color: #FFFFFF; 
+}
+input[type="color"] {
+    width: 60px;
+    height: 40px;
+    padding: 0;
+    border: none;
+    cursor: pointer;
+}
+input[type="range"] {
+    -webkit-appearance: none;
+    background: #001F3F;
+    height: 8px;
+    border-radius: 4px;
+    border: 1px solid #00BFFF;
+}
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 20px;
+    height: 20px;
+    background: #00BFFF;
+    border-radius: 50%;
+    cursor: pointer;
+}
+#fontSizeValue, #textXValue, #textYValue {
+    font-size: 14px;
+    color: #00BFFF;
+    text-align: center;
+}
+.button-group {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+button { 
+    background: #00BFFF; 
+    color: #0A2540; 
+    font-weight: bold; 
+    cursor: pointer; 
+    transition: background 0.3s; 
+    border: none;
+    padding: 12px 20px;
+    border-radius: 4px;
+}
+button:hover { background: #FF4136; color: #FFFFFF; }
+.preview-section {
+    text-align: center;
+}
+.main-preview {
+    max-width: 100%;
+    border: 2px solid #00BFFF;
+    border-radius: 8px;
+    background: #000;
+    margin: 10px auto;
+    display: block;
+}
+.gallery-section {
+    text-align: center;
+}
+.preview-wrapper { position:relative; display:inline-block; }
+.drag-hint {
+    position:absolute; top:8px; right:8px; background:rgba(0,0,0,0.6);
+    color:#fff; padding:4px 8px; border-radius:4px; font-size:12px;
+    pointer-events:none; opacity:0; transition:opacity .2s;
+}
+.preview-wrapper:hover .drag-hint { opacity:1; }
+
+/* 滑块组默认隐藏 */
+.slider-group { margin-top:10px; }
+
+/* 画廊 & 进度默认隐藏 */
+#gallerySection, #progressSection { display:none; }
+
+/* 卡片悬停光晕 */
+.card:hover { box-shadow:0 6px 14px rgba(0,191,255,.4); }
+.preview-gallery { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; overflow-x: auto; }
+canvas { border: 1px solid #00BFFF; border-radius: 4px; background: #000; }
+#progress { width: 100%; height: 20px; background: #001F3F; border: 1px solid #00BFFF; display: none; margin: 10px 0; border-radius: 4px; }
+#progress-bar { height: 100%; background: #00BFFF; width: 0%; transition: width 0.3s; border-radius: 4px; }
+.progress-section {
+    text-align: center;
+}
+.help-section .help-toggle { cursor: pointer; color: #00BFFF; font-weight: bold; display: block; text-align: center; }
+.help-content { display: none; margin-top: 10px; padding: 15px; background: rgba(255, 255, 255, 0.1); border-radius: 4px; }
+#status { color: #FF4136; font-weight: bold; text-align: center; margin: 0; }
+#previewStatus {
+    color: #CCCCCC;
+    font-style: italic;
+}
+@media (max-width: 600px) {
+    .container { padding: 10px; }
+    .text-options { grid-template-columns: 1fr; }
+    .button-group { flex-direction: column; }
+    .preview-gallery { gap: 5px; }
+}

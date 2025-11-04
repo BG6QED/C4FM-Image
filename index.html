@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yaesu C4FM图片批量转换工具</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/exif-js@2.3.0/exif.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>Yaesu C4FM图片批量转换工具</h1>
+        <p class="subtitle">兼容Yaesu C4FM MMS机型（如FT-2D/3D/5D、FTM-400等）</p>
+
+        <!-- 输入卡片 -->
+        <div class="section input-section card">
+            <div class="input-group">
+                <label for="callsign">呼号 (CALLSIGN, e.g. BG1XXX):</label>
+                <input type="text" id="callsign" value="ALL" maxlength="16">
+            </div>
+
+            <div class="input-group">
+                <label for="radioid">无线电ID (RADIOID, 8位数字):</label>
+                <input type="number" id="radioid" value="12345678" min="0" max="99999999">
+            </div>
+
+            <div class="input-group">
+                <label for="resolution">分辨率选择:</label>
+                <select id="resolution">
+                    <option value="320x240">320×240 (高清，推荐)</option>
+                    <option value="160x120">160×120 (低清)</option>
+                </select>
+            </div>
+
+            <div class="input-group">
+                <label for="imageFiles">图片文件 (支持批量上传):</label>
+                <input type="file" id="imageFiles" accept="image/*" multiple>
+            </div>
+
+            <div class="input-group">
+                <label for="text">叠加文本 (支持\\n换行):</label>
+                <input type="text" id="text" placeholder="e.g. Test\\nLine">
+            </div>
+
+            <div class="input-group">
+                <label for="color">文本颜色 (点击选择):</label>
+                <input type="color" id="color" value="#ff0000">
+            </div>
+
+            <div class="text-options">
+                <div class="option-group">
+                    <label for="fontSize">文本大小 (px):</label>
+                    <input type="range" id="fontSize" min="10" max="60" value="48" step="1">
+                    <span id="fontSizeValue">48px</span>
+                </div>
+
+                <!-- X/Y 滑块默认隐藏 -->
+                <div class="option-group slider-group" id="xySliders" style="display:none;">
+                    <label for="textX">X 位置:</label>
+                    <input type="range" id="textX" min="0" max="320" value="5" step="1">
+                    <span id="textXValue">5</span>
+
+                    <label for="textY">Y 位置:</label>
+                    <input type="range" id="textY" min="0" max="240" value="5" step="1">
+                    <span id="textYValue">5</span>
+                </div>
+            </div>
+
+            <div class="button-group">
+                <button onclick="updatePreview()">更新预览</button>
+                <button onclick="toggleSliders()">显示/隐藏滑块</button>
+                <button onclick="resetTextOptions()">重置文本设置</button>
+                <button onclick="processImages()">批量生成ZIP包</button>
+            </div>
+        </div>
+
+        <!-- 实时预览卡片 -->
+        <div class="section preview-section card">
+            <h3>实时预览</h3>
+            <div class="preview-wrapper">
+                <canvas id="previewCanvas" width="320" height="240" class="main-preview"></canvas>
+                <div id="dragHint" class="drag-hint">拖动文字调整位置</div>
+            </div>
+            <p id="previewStatus">上传图片以预览文本效果</p>
+        </div>
+
+        <!-- 画廊卡片（默认隐藏） -->
+        <div class="section gallery-section card" id="gallerySection" style="display:none;">
+            <h3>批量预览画廊</h3>
+            <div class="preview-gallery" id="previewGallery"></div>
+        </div>
+
+        <!-- 进度卡片（默认隐藏） -->
+        <div class="section progress-section card" id="progressSection" style="display:none;">
+            <div id="progress"><div id="progress-bar"></div></div>
+            <p id="status"></p>
+        </div>
+
+        <!-- 使用说明卡片 -->
+        <div class="section help-section card">
+            <span class="help-toggle" onclick="toggleHelp()">使用说明 & 图片规格</span>
+            <div class="help-content" id="helpContent">
+                <h3>快速使用步骤：</h3>
+                <ol>
+                    <li>输入你的呼号和Radio ID（从Yaesu设备获取）。</li>
+                    <li>选择分辨率（默认高清，程序自动调整）。</li>
+                    <li>点击“选择文件”上传1-10张图片（支持JPG/PNG等，自动批量处理，提取EXIF日期/GPS）。</li>
+                    <li>可选：添加文本叠加（直接在预览图上拖动文字定位）。</li>
+                    <li>点击“批量生成ZIP包”，浏览器会处理并下载 <code>YSF_Images_*.zip</code>。</li>
+                    <li><strong>解压提示</strong>：Windows安全中心可能误报ZIP为“潜在有害”。解决：右键ZIP → 属性 → 勾选“解锁”；或用7-Zip等第三方解压程序。</li>
+                    <li>解压ZIP，将 <code>PHOTO/</code> 和 <code>QSOLOG/</code> 复制到SD卡根目录（FAT32）。</li>
+                    <li>插入SD卡，重启设备。MENU → MMS → PICTURE TX 发送（C4FM）。</li>
+                </ol>
+                <h3>图片规格要求：</h3>
+                <ul>
+                    <li>上传图片建议宽高比4:3（程序自动调整分辨率、格式、压缩、EXIF日期/GPS）。</li>
+                </ul>
+                <p>73！</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
