@@ -212,10 +212,10 @@ document.addEventListener('DOMContentLoaded', () => {
 async function processImages(){
     const callsign = document.getElementById('callsign').value.padEnd(16, ' ').substring(0, 16);
     
-    // 正确处理 Radio ID：支持字母+数字，8 位，不 parseInt
-    let radioidInput = document.getElementById('radioid').value.toUpperCase();
-    radioidInput = radioidInput.padStart(8, '0').substring(0, 8);
-    const radioidStr = radioidInput;
+    // 正确处理 Radio ID：支持字母+数字，8 位
+    let radioidRaw = document.getElementById('radioid').value.toUpperCase().substring(0, 8);
+    const radioidFull = radioidRaw.padStart(8, '0');     // 用于 DIR 条目
+    const radioidPrefix = radioidRaw.padStart(5, '0').substring(0, 5);  // 用于文件名
 
     const [width, height] = document.getElementById('resolution').value.split('x').map(Number);
     const files = document.getElementById('imageFiles').files;
@@ -248,8 +248,7 @@ async function processImages(){
 
     for (let i = 0; i < files.length; i++){
         const file = files[i], seq = i + 1;
-        // 正确文件名：H + 前5位 + 6位序列 + .jpg
-        const name = `H${radioidStr.substring(0, 5)}${seq.toString().padStart(6, '0')}.jpg`;
+        const name = `H${radioidPrefix}${seq.toString().padStart(6, '0')}.jpg`;
 
         promises.push(new Promise((res, rej) => {
             const r = new FileReader();
@@ -283,11 +282,11 @@ async function processImages(){
                         cvs.toBlob(blob => {
                             try {
                                 /* ---- DIR entry (80 bytes) ---- */
-                                for (let j = 0; j < 4; j++) dirBytes[dirOff++] = 0;               // head
-                                for (let j = 0; j < 5; j++) dirBytes[dirOff++] = 32;               // node id
-                                dirBytes[dirOff++] = 65; dirBytes[dirOff++] = 76; dirBytes[dirOff++] = 76; dirBytes[dirOff++] = 32; // ALL
-                                dirBytes[dirOff++] = 32;                                          // space
-                                for (let j = 0; j < 8; j++) dirBytes[dirOff++] = radioidStr.charCodeAt(j) || 32;
+                                for (let j = 0; j < 4; j++) dirBytes[dirOff++] = 0;
+                                for (let j = 0; j < 5; j++) dirBytes[dirOff++] = 32;
+                                dirBytes[dirOff++] = 65; dirBytes[dirOff++] = 76; dirBytes[dirOff++] = 76; dirBytes[dirOff++] = 32;
+                                dirBytes[dirOff++] = 32;
+                                for (let j = 0; j < 8; j++) dirBytes[dirOff++] = radioidFull.charCodeAt(j) || 32;
                                 for (let j = 0; j < 16; j++) dirBytes[dirOff++] = callsign.charCodeAt(j) || 32;
                                 writeDateToArray(dirBytes, dirOff, nowM1); dirOff += 6;
                                 writeDateToArray(dirBytes, dirOff, now);   dirOff += 6;
@@ -306,7 +305,6 @@ async function processImages(){
 
                                 photo.file(name, blob);
 
-                                // 小预览
                                 const pv = document.createElement('canvas');
                                 pv.width = width / 2; pv.height = height / 2;
                                 pv.getContext('2d').drawImage(cvs, 0, 0, pv.width, pv.height);
@@ -328,10 +326,10 @@ async function processImages(){
                                     qso.file('QSOPCTFAT.dat', fat);
                                     const mng = new Uint8Array(32);
                                     const mv = new DataView(mng.buffer);
-                                    mv.setUint16(0, 0, false);               // msg_count
+                                    mv.setUint16(0, 0, false);
                                     for (let j = 2; j < 16; j++) mng[j] = 0xFF;
-                                    mv.setUint16(16, picCount, false);       // pic_count
-                                    mv.setUint16(18, 0, false);              // grp_count
+                                    mv.setUint16(16, picCount, false);
+                                    mv.setUint16(18, 0, false);
                                     for (let j = 20; j < 32; j++) mng[j] = 0xFF;
                                     qso.file('QSOMNG.dat', mng);
 
